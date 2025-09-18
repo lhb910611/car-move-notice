@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知车主挪车</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        :root {
+            --primary-color: #4776E6;
+            --primary-light: #6a93ff;
+            --primary-dark: #305ccc;
+            --secondary-color: #8E54E9;
+            --success-color: #2ecc71;
+            --warning-color: #FF9800;
+            --error-color: #e74c3c;
+            --text-color: #2c3e50;
+            --light-text: #ffffff;
+            --background-color: #f8f9fa;
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --shadow-color: rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+            --transition-slow: 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color);
+            padding: 20px;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景装饰元素 */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            top: 10%;
+            left: 10%;
+            animation: float 15s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        body::after {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+            bottom: 5%;
+            right: 5%;
+            animation: float 18s ease-in-out infinite reverse;
+            z-index: -1;
+        }
+        
+        .container { 
+            text-align: center; 
+            padding: 45px 35px; 
+            width: 100%; 
+            max-width: 480px; 
+            border-radius: var(--border-radius); 
+            box-shadow: 0 15px 45px var(--shadow-color);
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            transform: translateY(0);
+            transition: var(--transition-slow);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            z-index: 2;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .container:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 55px rgba(0, 0, 0, 0.18);
+        }
+        
+        h1 { 
+            font-size: 34px; 
+            margin-bottom: 25px; 
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 8px;
+        }
+        
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+        
+        .car-icon {
+            font-size: 70px;
+            margin-bottom: 25px;
+            display: inline-block;
+            animation: float 6s ease-in-out infinite;
+            color: var(--primary-color);
+            position: relative;
+            padding: 15px;
+            border-radius: 50%;
+            background: rgba(71, 118, 230, 0.1);
+        }
+        
+        p { 
+            margin-bottom: 30px; 
+            font-size: 18px; 
+            color: #546e7a;
+            line-height: 1.8;
+        }
+        
+        .info-box {
+            background: linear-gradient(to right, rgba(71, 118, 230, 0.08), rgba(142, 84, 233, 0.08));
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition-fast);
+        }
+        
+        .info-box:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-box p {
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-box i {
+            margin-right: 12px;
+            color: var(--primary-color);
+            font-size: 18px;
+            width: 22px;
+            text-align: center;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 18px 24px; 
+            font-size: 18px; 
+            font-weight: 600; 
+            color: #fff; 
+            border: none; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            z-index: -1;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+        }
+        
+        button:hover::before {
+            transform: translateX(0);
+        }
+        
+        button:active {
+            transform: scale(0.97);
+        }
+        
+        .notify-btn { 
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 6px 20px rgba(71, 118, 230, 0.25);
+        }
+        
+        .notify-btn:hover { 
+            box-shadow: 0 8px 25px rgba(71, 118, 230, 0.4);
+            transform: translateY(-3px);
+        }
+        
+        .notify-btn:disabled {
+            background: #cccccc;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .notify-btn:disabled:hover::before {
+            transform: translateX(-100%);
+        }
+        
+        .call-btn { 
+            background: linear-gradient(45deg, var(--success-color), #27ae60);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.25);
+        }
+        
+        .call-btn:hover { 
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+            transform: translateY(-3px);
+        }
+        
+        .action-tips {
+            margin-top: 20px;
+            font-size: 15px;
+            color: #90a4ae;
+            font-weight: 500;
+        }
+        
+        #notificationCount {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0 3px;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+        
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 16px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #90a4ae;
+            opacity: 0.8;
+        }
+        
+        /* 倒计时样式 */
+        .countdown {
+            font-weight: bold;
+        }
+        
+        /* 涟漪效果 */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        
+        /* 脉冲动画 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(71, 118, 230, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 12px rgba(71, 118, 230, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(71, 118, 230, 0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 35px 25px;
+            }
+            
+            h1 {
+                font-size: 30px;
+            }
+            
+            .car-icon {
+                font-size: 60px;
+            }
+            
+            p {
+                font-size: 16px;
+            }
+            
+            button {
+                padding: 16px 20px;
+                font-size: 16px;
+            }
+            
+            .info-box {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="car-icon">
+            <i class="fas fa-car"></i>
+        </div>
+        <h1>温馨提示</h1>
+        <p>给您带来的不便请谅解<br>请通过以下方式联系我，我会立即前来挪车</p>
+        
+        <div class="info-box">
+            <p><i class="fas fa-info-circle"></i> 请先尝试微信通知，若无响应再拨打电话</p>
+            <p><i class="fas fa-clock"></i> 通常会在5分钟内响应</p>
+        </div>
+        
+        <div class="button-group">
+            <button class="notify-btn pulse" id="wechatNotify">
+                <i class="fab fa-weixin"></i>
+                <span>微信通知车主</span>
+                <span class="countdown" style="display: none;"></span>
+            </button>
+            <button class="call-btn" id="callOwner">
+                <i class="fas fa-phone"></i>
+                <span>电话联系车主</span>
+            </button>
+        </div>
+        
+        <p class="action-tips">已发送<span id="notificationCount">0</span>次通知</p>
+        
+        <div class="footer">
+            <p>感谢您的耐心等待</p>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // 配置信息
+        const config = {
+            phone: '13731679416',
+            wxpusherAppToken: 'AT_pw3OZ9FRLtWIJaKY6YJ2EW0IydRL0M3P',
+            wxpusherUIDs: ['UID_10IK47lvKoFYTYV0F5FrjDcUDoIK'],
+            notificationCount: 0,
+            // 冷却配置
+            shortCooldown: 5, // 短冷却时间(秒)
+            longCooldown: 5 * 60, // 长冷却时间(秒)
+            maxShortTries: 3 // 短冷却次数上限
+        };
+        
+        // DOM 元素
+        const wechatNotifyBtn = document.getElementById('wechatNotify');
+        const callOwnerBtn = document.getElementById('callOwner');
+        const notificationCountEl = document.getElementById('notificationCount');
+        const toast = document.getElementById('toast');
+        const countdownEl = wechatNotifyBtn.querySelector('.countdown');
+        const originalBtnText = wechatNotifyBtn.querySelector('span').textContent;
+        
+        // 显示提示信息
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+        
+        // 倒计时功能
+        function startCountdown(seconds, isLongCooldown = false) {
+            let remaining = seconds;
+            wechatNotifyBtn.disabled = true;
+            wechatNotifyBtn.classList.remove('pulse');
+            
+            // 显示倒计时元素
+            countdownEl.style.display = 'inline-block';
+            
+            // 更新按钮文本
+            if (isLongCooldown) {
+                wechatNotifyBtn.querySelector('span').textContent = '通知已达上限';
+            } else {
+                wechatNotifyBtn.querySelector('span').textContent = '请稍后再试';
+            }
+            
+            // 倒计时更新
+            const countdownInterval = setInterval(() => {
+                remaining--;
+                
+                // 格式化时间显示
+                if (isLongCooldown) {
+                    const minutes = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    countdownEl.textContent = `(${minutes}分${secs}秒)`;
+                } else {
+                    countdownEl.textContent = `(${remaining}秒)`;
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    // 重置按钮状态
+                    wechatNotifyBtn.disabled = false;
+                    countdownEl.style.display = 'none';
+                    wechatNotifyBtn.querySelector('span').textContent = originalBtnText;
+                    wechatNotifyBtn.classList.add('pulse');
+                    
+                    // 长冷却结束后提示
+                    if (isLongCooldown) {
+                        showToast('冷却时间已结束，可以再次发送微信通知');
+                    }
+                }
+            }, 1000);
+        }
+        
+        // 微信通知功能
+        async function notifyOwner() {
+            const button = wechatNotifyBtn;
+            button.classList.add('loading');
+            button.classList.remove('pulse');
+            
+            try {
+                const response = await fetch("https://wxpusher.zjiecode.com/api/send/message", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json" 
+                    },
+                    body: JSON.stringify({
+                        appToken: config.wxpusherAppToken,
+                        content: "您好，有人需要您挪车，请及时处理。",
+                        contentType: 1,
+                        uids: config.wxpusherUIDs
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 1000) {
+                    config.notificationCount++;
+                    notificationCountEl.textContent = config.notificationCount;
+                    showToast("通知已发送，车主很快就来！");
+                    
+                    // 检查是否需要进入长冷却
+                    if (config.notificationCount % config.maxShortTries === 0) {
+                        showToast(`已发送${config.maxShortTries}次通知，将进入${config.longCooldown/60}分钟冷却，请尝试电话联系`);
+                        startCountdown(config.longCooldown, true);
+                    } else {
+                        // 短冷却
+                        startCountdown(config.shortCooldown);
+                    }
+                } else {
+                    showToast("发送失败，请尝试电话联系");
+                    button.disabled = false;
+                    button.classList.add('pulse');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                showToast("网络错误，请尝试电话联系");
+                button.disabled = false;
+                button.classList.add('pulse');
+            } finally {
+                button.classList.remove('loading');
+            }
+        }
+        
+        // 拨打电话功能
+        function callOwner() {
+            if (confirm("确定要拨打电话联系车主吗？")) {
+                window.location.href = "tel:" + config.phone;
+            }
+        }
+        
+        // 添加事件监听
+        wechatNotifyBtn.addEventListener('click', notifyOwner);
+        callOwnerBtn.addEventListener('click', callOwner);
+        
+        // 添加点击动画效果
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                // 禁用状态不添加动画
+                if (button.disabled) return;
+                
+                const x = e.clientX - e.target.getBoundingClientRect().left;
+                const y = e.clientY - e.target.getBoundingClientRect().top;
+                
+                const ripples = document.createElement('span');
+                ripples.classList.add('ripple');
+                ripples.style.left = x + 'px';
+                ripples.style.top = y + 'px';
+                this.appendChild(ripples);
+                
+                setTimeout(() => {
+                    ripples.remove();
+                }, 600);
+            });
+        });
+    </script>
+</body>
+</html>
